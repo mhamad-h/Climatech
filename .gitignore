@@ -1,0 +1,63 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.build/
+.dist/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.env
+.env.*
+venv/
+.venv/
+ENV/
+.envrc
+
+# Logs
+logs/
+*.log
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# VS Code / IDE
+.vscode/
+.idea/
+*.swp
+
+# ---- Node / Frontend ----
+node_modules/
+.npm/
+.pnpm-store/
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+.DS_Store
+coverage-*
+
+# Build artifacts
+client/dist/
+client/build/
+*.tar.gz
+
+# Misc
+Thumbs.db
+*.DS_Store
+
+# ---- Future ML Artifacts ----
+models/
+artifacts/
+*.joblib
+*.pickle
+*.pkl
+
+# ---- Docker ----
+*.pid
+.dockerignore

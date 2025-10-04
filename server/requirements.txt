@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+# pandas  # Uncomment when data processing starts
+# scikit-learn  # Uncomment when ML model training/inference is added
+# xgboost  # Uncomment if gradient boosted trees are used
