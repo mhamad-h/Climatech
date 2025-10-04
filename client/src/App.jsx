@@ -111,7 +111,23 @@ function App() {
       
       const forecastData = await getForecast(requestParams);
       
-      setResult(forecastData);
+      // Transform backend data to match frontend expectations
+      const transformedData = {
+        ...forecastData,
+        forecast: {
+          hourly: forecastData.forecast?.hourly_data || [],
+          summary: {
+            probability_any_rain: forecastData.forecast?.summary?.average_probability || 0,
+            total_expected_mm: forecastData.forecast?.summary?.total_precipitation_mm || 0,
+            peak_risk_window: forecastData.forecast?.hourly_data?.[forecastData.forecast?.summary?.peak_intensity_hour || 0]?.datetime_utc || new Date().toISOString(),
+            confidence_level: forecastData.forecast?.summary?.confidence_score > 0.7 ? 'high' : 
+                             forecastData.forecast?.summary?.confidence_score > 0.4 ? 'moderate' : 'low',
+            recommendation: forecastData.forecast?.summary?.weather_summary || 'Forecast generated successfully'
+          }
+        }
+      };
+      
+      setResult(transformedData);
     } catch (err) {
       setError(err.message || 'Failed to generate forecast');
     } finally {
@@ -121,20 +137,21 @@ function App() {
 
   // Export handlers
   const handleExport = () => {
-    if (!result || !result.forecast || !result.forecast.hourly_data) {
+    if (!result || !result.forecast || !result.forecast.hourly) {
       return;
     }
     
     const csvContent = [
-      ['DateTime UTC', 'DateTime Local', 'Precipitation Probability', 'Precipitation Amount (mm)', 'Confidence Low', 'Confidence High', 'Confidence Level'].join(','),
-      ...result.forecast.hourly_data.map(hour => [
+      ['DateTime UTC', 'DateTime Local', 'Precipitation Probability', 'Precipitation Amount (mm)', 'Confidence Low', 'Confidence High', 'Temperature C', 'Humidity %'].join(','),
+      ...result.forecast.hourly.map(hour => [
         hour.datetime_utc,
         hour.datetime_local,
         hour.precipitation_probability,
         hour.precipitation_amount_mm,
         hour.confidence_low,
         hour.confidence_high,
-        hour.confidence_level
+        hour.temperature_c || '',
+        hour.humidity_percent || ''
       ].join(','))
     ].join('\n');
     
