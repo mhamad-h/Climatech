@@ -1,314 +1,377 @@
-<div align="center">
+# Climatech - Precipitation Forecasting App
 
+A comprehensive precipitation forecasting application built for the NASA Space Apps Challenge. This app provides real-time precipitation forecasts using machine learning models trained on NASA weather data, featuring an interactive map interface for event planning.
 
-# Will it Rain on My Parade? (Climatech Monorepo Skeleton)
+## Features
 
-Skeleton monorepo for the NASA Space Apps Challenge project "Will it Rain on My Parade?".
-This repository contains a FastAPI backend (Python) and a React + Vite + Tailwind frontend prepared for rapid iteration on precipitation probability modeling using NASA data sources (e.g., GPM).
+- 🌧️ **Real-time precipitation forecasting** up to 30 days ahead
+- 🗺️ **Interactive map interface** with location selection
+- 🎯 **Event-specific recommendations** for outdoor activities
+- 📊 **Probabilistic forecasts** with confidence intervals
+- 🤖 **Machine learning models** trained on NASA data
+- ⚡ **Fast API backend** with caching and error handling
+- 📱 **Responsive web interface** built with React
 
-> Current Status: SCAFFOLD ONLY – All predictive, data ingestion, and model logic are placeholders awaiting implementation.
+## Technology Stack
 
----
+### Frontend
+- **React 18** with Vite for fast development
+- **Tailwind CSS** for styling
+- **Leaflet** for interactive maps
+- **Recharts** for data visualization
 
-## Repository Structure
+### Backend
+- **FastAPI** for high-performance API
+- **Python 3.8+** with async/await support
+- **Pydantic** for data validation
+- **NASA POWER API** integration
 
-```
-.
-├── server/                  # FastAPI backend (prediction API placeholder)
-│   ├── main.py              # App entrypoint with /api/predict-rain mock endpoint
-│   ├── requirements.txt     # Python dependencies (ML libs commented out)
-│   ├── models/
-│   │   └── prediction.py    # Pydantic request/response models (response TBD)
-│   └── ml/
-│       ├── data_handler.py  # TODO: data fetching & preprocessing
-│       └── predictor.py     # TODO: model loading & inference
-├── client/                  # React (Vite) frontend skeleton
-│   ├── index.html
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── tailwind.config.js
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx          # Form + state placeholders
-│       ├── index.css        # Tailwind directives + dark theme base
-│       ├── components/      # Placeholder UI components
-│       │   ├── LocationInput.jsx
-│       │   ├── EventDatePicker.jsx
-│       │   ├── ResultsDisplay.jsx
-│       │   └── Loader.jsx
-│       └── services/
-│           └── api.js       # Axios instance + TODO for getRainPrediction
-├── .gitignore
-└── README.md (this file)
-```
+### Machine Learning
+- **Scikit-learn** for baseline models
+- **LightGBM & XGBoost** for gradient boosted trees
+- **Comprehensive feature engineering** pipeline
+- **Model evaluation** and performance metrics
 
----
+## Quick Start
 
-## Backend Server (Python / FastAPI)
+### Prerequisites
+- Python 3.8 or higher
+- Node.js 18 or higher
+- Git
 
-### Features (Planned)
-- NASA GPM precipitation + auxiliary climate data ingestion.
-- Feature engineering (seasonality, anomalies, climatology baselines).
-- ML model inference service with confidence metrics.
-- Structured JSON response for frontend consumption.
-
-### Current State
-`/api/predict-rain` returns a hardcoded mock object. Data + ML layers are not implemented.
-
-### Setup & Run
-
+### 1. Clone the Repository
 ```bash
-cd server
+git clone <repository-url>
+cd Climatech
+```
 
-# (Recommended) Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+### 2. Complete Setup (Recommended)
+```bash
+# Run the automated setup and training pipeline
+python train_models.py
+```
+
+This will:
+- Install all Python dependencies
+- Download and prepare training data
+- Train machine learning models
+- Generate evaluation reports
+- Set up all necessary directories
+
+### 3. Manual Setup
+
+#### Backend Setup
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 
 # Install dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r server/requirements.txt
 
-# Run development server (auto-reload)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Start the backend server
+cd server
+python main.py
 ```
 
-### Test the Mock Endpoint
+#### Frontend Setup
 ```bash
-curl -X POST http://127.0.0.1:8000/api/predict-rain \
-	-H 'Content-Type: application/json' \
-	-d '{"latitude":40.71,"longitude":-74.00,"eventDate":"2025-10-26"}'
-```
-
-### Next Implementation Steps
-1. Define `PredictionResponse` model schema in `models/prediction.py`.
-2. Implement `fetch_weather_data` + `preprocess_data` with NASA GPM integration.
-3. Add `load_model` + `predict` logic with a persisted model artifact.
-4. Add error handling & logging (422 validation, 500 internal, structured logs).
-5. Introduce tests (pytest + httpx AsyncClient) for /health and /api/predict-rain.
-6. Add environment variable management (`.env` + python-dotenv) for API keys.
-
----
-
-## Frontend Client (React / Vite / Tailwind)
-
-### Features (Planned)
-- Input form for location (lat/lon or geocoded search) and event date.
-- API call to backend prediction endpoint.
-- Result visualization (probability, confidence, narrative summary).
-- Dark theme with space/climate aesthetic.
-
-### Current State
-Form + state placeholders only. Components and API service are stubs.
-
-### Setup & Run
-```bash
+# Install dependencies
 cd client
-
-# Install Node dependencies
 npm install
 
-# Start Vite dev server (default: http://localhost:5173)
+# Start the development server
 npm run dev
 ```
 
-### Build Production Bundle
+### 4. Access the Application
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API Documentation: `http://localhost:8000/docs`
+
+## Machine Learning Pipeline
+
+### Training Your Own Models
+
+1. **Quick Training** (Recommended):
+   ```bash
+   python train_models.py
+   ```
+
+2. **Manual Training Steps**:
+   ```bash
+   cd ml
+   
+   # Download training data
+   python download_data.py
+   
+   # Build ML dataset with feature engineering
+   python build_dataset.py
+   
+   # Train baseline and gradient boosted models
+   python train.py
+   
+   # Evaluate model performance
+   python evaluate.py
+   ```
+
+### Model Architecture
+
+The app uses a multi-model ensemble approach:
+
+1. **Baseline Models**
+   - **Climatology**: Seasonal averages and historical patterns
+   - **Persistence**: Current condition extrapolation
+
+2. **Advanced Models**
+   - **LightGBM**: Gradient boosted decision trees
+   - **XGBoost**: Extreme gradient boosting
+
+3. **Feature Engineering**
+   - **Temporal Features**: Hour, day, month, season cycles
+   - **Location Features**: Latitude, longitude, elevation effects
+   - **Lagged Features**: Historical precipitation patterns (1h to 72h)
+   - **Meteorological Features**: Temperature, humidity, pressure interactions
+   - **Climatology Features**: Long-term averages and anomalies
+
+### Model Performance
+
+After training, check the evaluation reports in the `evaluation/` directory:
+- `evaluation_report.json`: Detailed metrics and performance
+- `evaluation_summary.md`: Human-readable summary
+- `visualizations/`: Performance plots and feature importance
+
+## API Documentation
+
+### Main Endpoint
+
+**POST** `/api/v1/forecast`
+
+Generate precipitation forecasts for a specific location and time range.
+
+**Request Body:**
+```json
+{
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "start_datetime": "2024-01-15T12:00:00Z",
+  "duration_hours": 72,
+  "forecast_type": "probabilistic"
+}
+```
+
+**Response:**
+```json
+{
+  "location": {
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "name": "New York, NY, USA",
+    "elevation": 10
+  },
+  "forecast": {
+    "1h": {
+      "precipitation_mm": 0.5,
+      "probability": 0.25,
+      "confidence": "high",
+      "model_type": "lightgbm"
+    },
+    "24h": {
+      "precipitation_mm": 2.3,
+      "probability": 0.45,
+      "confidence": "medium", 
+      "model_type": "lightgbm"
+    }
+  },
+  "metadata": {
+    "forecast_time": "2024-01-15T10:00:00Z",
+    "model_type": "trained_ml",
+    "data_points_used": 168
+  }
+}
+```
+
+## Project Structure
+
+```
+Climatech/
+├── client/                     # React frontend
+│   ├── src/
+│   │   ├── components/         # UI components
+│   │   │   ├── Map.jsx         # Interactive map
+│   │   │   ├── LocationInput.jsx
+│   │   │   ├── EventDatePicker.jsx
+│   │   │   └── ResultsDisplay.jsx
+│   │   ├── services/
+│   │   │   └── api.js         # API integration
+│   │   └── App.jsx            # Main application
+│   ├── package.json
+│   └── vite.config.js
+├── backend/                    # FastAPI backend
+│   ├── routers/
+│   │   └── forecast.py        # Main API endpoints
+│   ├── services/
+│   │   ├── data_fetch.py      # NASA API integration
+│   │   ├── feature_engineering.py # ML features
+│   │   └── model_inference.py # Model predictions
+│   ├── utils/
+│   │   ├── config.py          # Configuration
+│   │   └── logging.py         # Structured logging
+│   ├── app.py                 # FastAPI application
+│   └── requirements.txt
+├── ml/                         # Machine learning pipeline
+│   ├── models/                # Trained model files
+│   ├── data/                  # Training datasets
+│   ├── download_data.py       # Data acquisition
+│   ├── feature_defs.py        # Feature engineering definitions
+│   ├── build_dataset.py       # Dataset preparation
+│   ├── train.py               # Model training
+│   ├── evaluate.py            # Model evaluation
+│   └── model_inference.py     # Real-time inference
+├── train_models.py            # Automated training pipeline
+└── README.md
+```
+
+## Development
+
+### Environment Variables
+Create a `.env` file in the backend directory:
 ```bash
+# NASA API (optional - falls back to synthetic data)
+NASA_API_KEY=your_nasa_api_key
+
+# Database (optional - uses in-memory cache)
+DATABASE_URL=sqlite:///./climatech.db
+
+# Logging
+LOG_LEVEL=INFO
+
+# Model settings
+MODEL_CACHE_TTL=3600
+MAX_FORECAST_HORIZON=720
+```
+
+### Running Tests
+```bash
+# Backend tests
+cd backend
+python -m pytest
+
+# Frontend tests
 cd client
-npm run build
-npm run preview  # Preview static build
+npm test
+
+# ML pipeline tests
+cd ml
+python -m pytest
 ```
 
-### Next Implementation Steps
-1. Implement `getRainPrediction` in `src/services/api.js`.
-2. Replace inline inputs in `App.jsx` with `<LocationInput />` + `<EventDatePicker />`.
-3. Add conditional rendering (Loader, ResultsDisplay, error states).
-4. Flesh out `ResultsDisplay` with probability visualization & confidence badge.
-5. Add basic input validation (lat ∈ [-90,90], lon ∈ [-180,180]).
-6. Introduce global state or React Query if complexity grows.
-
----
-
-## Running Both Concurrently
-Open two terminals:
-
-Terminal 1 (backend):
+### Model Retraining
 ```bash
-cd server
-source .venv/bin/activate  # if created
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Retrain models with new data
+python train_models.py
+
+# Or run individual steps
+cd ml
+python download_data.py --update  # Download new data
+python train.py --retrain         # Retrain existing models
 ```
 
-Terminal 2 (frontend):
+## Deployment
+
+### Docker (Recommended)
 ```bash
-cd client
-npm run dev
+# Build and run with Docker Compose
+docker-compose up --build
 ```
 
-The frontend will call the backend at `http://127.0.0.1:8000/api/predict-rain` (adjust if changing ports or host).
+### Manual Deployment
 
----
+1. **Train Models**:
+   ```bash
+   python train_models.py
+   ```
 
-## Suggested Future Enhancements
-- Add Docker Compose for unified dev environment.
-- Add Makefile (e.g., `make dev`, `make test`, `make lint`).
-- Introduce authentication / rate limiting if exposed publicly.
-- Implement monitoring (Prometheus metrics + frontend analytics for usage patterns).
-- Add CI pipeline (lint + test + build) via GitHub Actions.
-- Model versioning & experiment tracking (MLflow or Weights & Biases).
+2. **Build Frontend**:
+   ```bash
+   cd client
+   npm run build
+   ```
 
----
+3. **Deploy Backend** (example for Heroku):
+   ```bash
+   # Add Procfile with: web: uvicorn backend.app:app --host=0.0.0.0 --port=${PORT:-5000}
+   git add .
+   git commit -m "Deploy to production"
+   git push heroku main
+   ```
 
-## Contributing Workflow (Proposed)
-1. Create feature branch: `feat/<area>-<short-desc>`
-2. Implement + add tests.
-3. Run linters & formatters.
-4. Open PR with checklist referencing README tasks.
-5. Require at least one review before merge to `main`.
+### GitHub Codespaces
 
----
+This project is fully compatible with GitHub Codespaces:
+
+1. Open in Codespace
+2. Run: `python train_models.py`
+3. Start services: `cd backend && python app.py` and `cd client && npm run dev`
+4. Use port forwarding to access the application
+
+## Model Performance
+
+Expected performance metrics after training:
+
+- **Binary Classification** (Rain/No Rain): AUC-ROC > 0.75
+- **Regression** (Precipitation Amount): R² > 0.4 for short-term forecasts
+- **Skill Scores**: Significant improvement over climatology baseline
+- **Forecast Horizons**: Reliable predictions up to 72 hours, informative up to 720 hours
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Train models: `python train_models.py`
+4. Make your changes and add tests
+5. Commit your changes: `git commit -am 'Add feature'`
+6. Push to the branch: `git push origin feature-name`
+7. Submit a pull request
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Models not loading**: Run `python train_models.py` to train models
+2. **NASA API errors**: The app will use synthetic data if NASA API is unavailable
+3. **Memory issues during training**: Reduce dataset size in `download_data.py`
+4. **Port conflicts**: Change ports in `backend/app.py` and `client/vite.config.js`
+
+### Getting Help
+
+- Check the `evaluation/` directory for model performance reports
+- Review logs in the console output
+- Ensure all dependencies are installed with correct versions
 
 ## License
-Add your chosen license (MIT / Apache-2.0 / NASA Open Source Agreement) here.
 
----
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Disclaimer
-This is an initial scaffold. No real precipitation forecasts are produced yet. Do **not** use outputs for operational or safety-critical decisions.
+## Acknowledgments
 
+- NASA for providing weather data through the POWER API
+- OpenStreetMap for geocoding services
+- The machine learning community for gradient boosting algorithms
+- The open-source community for excellent tools and libraries
 
-</div>
+## NASA Space Apps Challenge
 
----
+This project was created for the NASA Space Apps Challenge, addressing the challenge of providing accurate precipitation forecasts for event planning. It combines:
 
-## 📁 Repository Structure
+- NASA Earth observation data
+- Advanced machine learning techniques
+- User-friendly web interface
+- Real-world applicability for outdoor event planning
 
-```
-.
-├── client/           # React + Vite + Tailwind frontend
-├── server/           # FastAPI backend (prediction API - skeleton)
-├── README.md         # This file
-└── .gitignore        # Git ignore rules for Python + Node
-```
-
----
-
-## 🚀 Quick Start (Both Services)
-
-Open two terminals (or use a process manager):
-
-1. Backend API at http://127.0.0.1:8000
-2. Frontend at http://localhost:5173
-
-See detailed instructions below.
-
----
-
-## 🧠 Backend Server (Python – FastAPI)
-
-Location: `server/`
-
-### Features (Current Skeleton)
-- FastAPI app with CORS enabled for the Vite dev origin.
-- `/api/predict-rain` POST endpoint accepting `latitude`, `longitude`, `eventDate`.
-- Returns a mock JSON response (to be replaced with real data & ML logic).
-- Placeholder modules under `ml/` and `models/` for future development.
-
-### Install & Run
-
-```bash
-cd server
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Test Health Check
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-### Example Predict Request (Mock Response)
-```bash
-curl -X POST http://127.0.0.1:8000/api/predict-rain \
-	-H 'Content-Type: application/json' \
-	-d '{"latitude":29.76, "longitude":-95.36, "eventDate":"2025-10-26"}'
-```
-
-### Backend TODO Roadmap (High-Level)
-- [ ] Implement `fetch_weather_data` using NASA GPM + auxiliary APIs.
-- [ ] Add data caching & retry logic.
-- [ ] Build feature engineering pipeline in `preprocess_data`.
-- [ ] Train & persist ML model (baseline: climatology + simple classifier/regressor).
-- [ ] Implement `predict` with uncertainty estimation.
-- [ ] Extend `PredictionResponse` schema with probability, confidence, summary.
-- [ ] Add authentication / rate limiting (if public).
-- [ ] Add automated tests (pytest) & CI.
-
----
-
-## 💻 Frontend Client (React + Vite + Tailwind)
-
-Location: `client/`
-
-### Features (Current Skeleton)
-- Vite + React project with Tailwind configured.
-- Dark theme foundation with custom space-inspired palette.
-- `App.jsx` contains placeholder form & state logic.
-- Components scaffolded under `src/components/` (all contain TODO notes).
-- `src/services/api.js` prepared with Axios instance.
-
-### Install & Run
-```bash
-cd client
-npm install
-npm run dev
-```
-
-Visit: http://localhost:5173
-
-### Frontend TODO Roadmap
-- [ ] Implement `LocationInput` (lat/lon validation or geocoding search).
-- [ ] Replace date input with richer date picker component.
-- [ ] Wire `handleSubmit` to `getRainPrediction` API.
-- [ ] Show `Loader` during pending requests.
-- [ ] Style `ResultsDisplay` with probability gauge & info cards.
-- [ ] Add global error + toast notifications.
-- [ ] Add environment-based API URL handling.
-- [ ] Write unit tests (React Testing Library) & lint rules.
-
----
-
-## 🔄 Concurrent Development (Optional Convenience)
-
-You can run both services together using two shells, or create a simple helper script / use tools like `concurrently` or `tmux`. Example (optional, not yet added):
-
-```bash
-# From repo root (after manual backend venv activation):
-(cd server && uvicorn main:app --reload) &
-(cd client && npm run dev)
-```
-
----
-
-## 🧪 Future Enhancements
-- Add Dockerfiles & docker-compose for reproducible deployment.
-- Add Makefile with common tasks (setup, lint, test, run).
-- Introduce logging & observability (structlog / OpenTelemetry).
-- Add model version endpoint `/api/model-info`.
-- Implement CI pipeline (GitHub Actions) for format + test + build.
-
----
-
-## 📜 License
-Add a suitable open-source license (MIT / Apache-2.0) — TODO.
-
----
-
-## 🤝 Contributing
-Create feature branches, open PRs with clear descriptions, link to related issues, and ensure lint/tests pass before requesting review.
-
----
-
-Happy building! 🚀
-
+The system provides both probabilistic and deterministic forecasts with uncertainty quantification, making it valuable for decision-making in weather-dependent activities.
