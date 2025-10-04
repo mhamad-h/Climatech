@@ -10,11 +10,16 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# CORS configuration for development - allow all origins for Codespace compatibility
+# CORS configuration for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=False,  # Set to False when using wildcard origins
+    allow_origins=[
+        "http://localhost:5173",  # Standard Vite dev server
+        "http://localhost:3000",  # Create React App
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000"
+    ],
+    allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
