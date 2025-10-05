@@ -1,13 +1,12 @@
 import axios from 'axios';
 
 // Get API base URL from environment or default  
-// Use localhost for normal development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.164.97:8000/api';
 
 // Axios instance configured for backend API
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000, // Increased timeout for climatology calculations
   headers: {
     'Content-Type': 'application/json',
   },
@@ -49,35 +48,114 @@ api.interceptors.response.use(
 );
 
 /**
- * Get precipitation forecast for a location and time period
+ * Get extended climate forecast (up to 6 months)
  * @param {Object} params - Forecast parameters
- * @param {number} params.latitude - Latitude in decimal degrees
- * @param {number} params.longitude - Longitude in decimal degrees  
- * @param {string} params.start_datetime_utc - Start datetime in ISO format
- * @param {number} params.horizon_hours - Forecast horizon in hours
- * @returns {Promise<Object>} Forecast response
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees  
+ * @param {string} params.start_date - Start date in YYYY-MM-DD format
+ * @param {number} params.forecast_days - Number of days to forecast (1-180)
+ * @param {Array} params.parameters - Parameters to include in forecast
+ * @returns {Promise<Object>} Extended forecast response
  */
-export async function getForecast(params) {
-  const response = await api.post('/forecast', params);
-  console.log('Forecast response:', response.data);
+export async function getExtendedForecast(params) {
+  const requestBody = {
+    latitude: params.lat,
+    longitude: params.lng,
+    start_date: params.start_date,
+    forecast_days: params.forecast_days,
+    include_daily: true,
+    include_monthly: true,
+    include_climate_context: true,
+    include_uncertainty: true
+  };
+  const response = await api.post('/forecast/extended', requestBody);
+  console.log('Extended forecast response:', response.data);
   return response.data;
 }
 
 /**
- * Get model information
- * @returns {Promise<Object>} Model info
+ * Get quick forecast (1-30 days)
+ * @param {Object} params - Forecast parameters
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees  
+ * @param {number} params.days_ahead - Days ahead to forecast (1-30)
+ * @returns {Promise<Object>} Quick forecast response
  */
-export async function getModelInfo() {
-  const response = await api.get('/models/info');
+export async function getQuickForecast(params) {
+  const requestBody = {
+    latitude: params.lat,
+    longitude: params.lng,
+    days_ahead: params.days_ahead || 7
+  };
+  const response = await api.post('/forecast/quick', requestBody);
+  console.log('Quick forecast response:', response.data);
   return response.data;
 }
 
 /**
- * Get data sources information
- * @returns {Promise<Object>} Data sources info
+ * Get historical weather data for a location
+ * @param {Object} params - Parameters object
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees
+ * @param {number} params.years - Years of data (default: 10)
+ * @returns {Promise<Object>} Historical data response
  */
-export async function getDataSources() {
-  const response = await api.get('/data/sources');
+export async function getHistoricalData(params) {
+  const queryParams = new URLSearchParams();
+  if (params.years) queryParams.append('years', params.years);
+  
+  const response = await api.get(`/historical/${params.lat}/${params.lng}?${queryParams}`);
+  console.log('Historical data response:', response.data);
+  return response.data;
+}
+
+/**
+ * Get climate normal values for a location
+ * @param {Object} params - Parameters object
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees
+ * @returns {Promise<Object>} Climate normal response
+ */
+export async function getClimateNormal(params) {
+  const requestBody = {
+    latitude: params.lat,
+    longitude: params.lng,
+    years_of_data: 30
+  };
+  const response = await api.post(`/climate-normal/${params.lat}/${params.lng}`, requestBody);
+  console.log('Climate normal response:', response.data);
+  return response.data;
+}
+
+/**
+ * Get monthly weather outlook
+ * @param {Object} params - Parameters object
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees
+ * @param {string} params.start_date - Start date for outlook
+ * @param {number} params.months - Number of months (default: 6)
+ * @returns {Promise<Object>} Monthly outlook response
+ */
+export async function getMonthlyOutlook(params) {
+  const queryParams = new URLSearchParams();
+  if (params.start_date) queryParams.append('start_date', params.start_date);
+  if (params.months) queryParams.append('months', params.months);
+  
+  const response = await api.get(`/forecast/monthly-outlook/${params.lat}/${params.lng}?${queryParams}`);
+  console.log('Monthly outlook response:', response.data);
+  return response.data;
+}
+
+/**
+ * Get comprehensive climate profile for a location
+ * @param {Object} params - Parameters object
+ * @param {number} params.lat - Latitude in decimal degrees
+ * @param {number} params.lng - Longitude in decimal degrees
+ * @returns {Promise<Object>} Climate profile response
+ */
+export async function getClimateProfile(params) {
+  const response = await api.get(`/location/climate-profile/${params.lat}/${params.lng}`);
+  console.log('Climate profile response:', response.data);
   return response.data;
 }
 
@@ -91,4 +169,5 @@ export async function checkHealth() {
 }
 
 // Legacy function for backward compatibility
-export const getRainPrediction = getForecast;
+export const getForecast = getQuickForecast;
+export const getRainPrediction = getQuickForecast;

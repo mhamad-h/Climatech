@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings."""
     
     # API Configuration
-    backend_host: str = "localhost"
+    backend_host: str = "0.0.0.0"
     backend_port: int = 8000
     frontend_url: str = "http://localhost:5173"
     
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     log_file: str = "./logs/app.log"
     
     # CORS
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: List[str] = ["*"]
     
     class Config:
         env_file = ".env"

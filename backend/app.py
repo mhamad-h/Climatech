@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import forecast
+from routers import climatology
 from utils.config import get_settings
 from utils.logging import setup_logging
 
@@ -34,9 +34,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Climatech Precipitation Forecasting API",
-    description="A comprehensive precipitation forecasting API using NASA data and ML models",
-    version="1.0.0",
+    title="Climatech Weather Forecasting API",
+    description="A comprehensive climatology-based weather forecasting API using NASA historical data and proven meteorological methods",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
@@ -48,24 +48,25 @@ settings = get_settings()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", settings.frontend_url],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(forecast.router, prefix="/api", tags=["forecasting"])
+app.include_router(climatology.router, prefix="/api", tags=["climatology", "forecasting"])
 
 
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
     return {
-        "message": "Climatech Precipitation Forecasting API",
-        "version": "1.0.0",
+        "message": "Climatech Weather Forecasting API",
+        "version": "2.0.0", 
         "docs": "/docs",
         "status": "running",
+        "methods": ["persistence", "analog", "climatology"],
         "timestamp": datetime.utcnow().isoformat()
     }
 
