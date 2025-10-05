@@ -39,7 +39,7 @@ const LocationInput = ({
     <div className={`space-y-4 ${className}`}>
       {/* Search by place name */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Search Location
         </label>
         <form onSubmit={handleSearch} className="flex gap-2">
@@ -48,12 +48,12 @@ const LocationInput = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for a city, address, or landmark..."
-            className="flex-1 rounded bg-slate-800 border border-slate-600 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded bg-purple-gray border border-geo-blue px-3 py-2 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-geo-cyan"
           />
           <button
             type="submit"
             disabled={!searchQuery.trim() || isSearching}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-geo-blue text-white rounded hover:bg-geo-cyan disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSearching ? (
               <>
@@ -72,12 +72,12 @@ const LocationInput = ({
 
       {/* Manual coordinate input */}
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-white mb-2">
           Or Enter Coordinates Manually
         </label>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">
+            <label className="block text-xs text-gray-300 mb-1">
               Latitude (-90 to 90)
             </label>
             <input
@@ -92,12 +92,12 @@ const LocationInput = ({
                   setTimeout(handleCoordinateChange, 100);
                 }
               }}
-              className="w-full rounded bg-slate-800 border border-slate-600 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded bg-purple-gray border border-geo-blue px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-geo-cyan"
               placeholder="40.7128"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">
+            <label className="block text-xs text-gray-300 mb-1">
               Longitude (-180 to 180)
             </label>
             <input
@@ -112,20 +112,20 @@ const LocationInput = ({
                   setTimeout(handleCoordinateChange, 100);
                 }
               }}
-              className="w-full rounded bg-slate-800 border border-slate-600 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded bg-purple-gray border border-geo-blue px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-geo-cyan"
               placeholder="-74.0060"
             />
           </div>
         </div>
         
         {latitude && longitude && (
-          <div className="mt-2 p-2 bg-slate-700 rounded text-sm text-gray-300">
+          <div className="mt-2 p-2 bg-geo-blue rounded text-sm text-white">
             Selected: {latitude.toFixed(4)}, {longitude.toFixed(4)}
           </div>
         )}
       </div>
 
-      <div className="text-xs text-gray-500 bg-slate-800 p-3 rounded border border-slate-700">
+      <div className="text-xs text-gray-300 bg-brown-gray p-3 rounded border border-purple-gray">
         <strong>Tip:</strong> Click on the map above to select a location, search for a place name, 
         or enter coordinates manually.
       </div>

@@ -56,9 +56,13 @@ if settings.environment == "production":
     # In production, be more specific about allowed origins
     cors_origins = [
         settings.frontend_url,
+        settings.production_frontend_url if hasattr(settings, 'production_frontend_url') else None,
+        "http://climatech-frontend-7057.eastus.azurecontainer.io",
         "https://*.azurecontainerapps.io",
         "https://*.azure.com"
     ]
+    # Remove None values
+    cors_origins = [origin for origin in cors_origins if origin is not None]
 
 app.add_middleware(
     CORSMiddleware,

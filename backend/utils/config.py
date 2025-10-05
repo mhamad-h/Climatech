@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     backend_host: str = "0.0.0.0"
     backend_port: int = 8000
     frontend_url: str = "http://localhost:5173"
+    # Production frontend URL (will be set via environment variable)
+    production_frontend_url: str = "http://climatech-frontend-7057.eastus.azurecontainer.io"
     
     # Azure Configuration
     azure_storage_connection_string: str = ""

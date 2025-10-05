@@ -28,7 +28,7 @@ function App() {
   
   // Display preferences
   const [showClimateNormals, setShowClimateNormals] = useState(true);
-  const [selectedParameters, setSelectedParameters] = useState(['temperature', 'precipitation', 'humidity', 'wind']);
+  const [selectedParameters, setSelectedParameters] = useState(['temperature', 'precipitation_chance', 'humidity', 'wind']);
 
   // Location handlers
   const handleLocationChange = (lat, lng) => {
@@ -203,7 +203,9 @@ function App() {
   const hasResults = extendedForecast || monthlyOutlook;
 
   return (
-    <div className="min-h-screen px-4 py-6 md:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen px-4 py-6 md:px-8" style={{
+      background: 'linear-gradient(135deg, #293132 0%, #474044 50%, #4F5365 100%)'
+    }}>
       {/* Rain Effect Styles */}
       <style>{`
         .rain-container {
@@ -261,7 +263,7 @@ function App() {
           <h1
             className="text-4xl md:text-6xl font-bold tracking-tight mb-4"
             style={{
-              background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)',
+              background: 'linear-gradient(90deg, #547AA5 0%, #50D8D7 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               position: 'relative',
@@ -272,7 +274,7 @@ function App() {
           >
             GeoClime
           </h1>
-          <div className="inline-block px-6 py-3 rounded-xl bg-slate-900/80 backdrop-blur-sm border border-slate-700/50">
+          <div className="inline-block px-6 py-3 rounded-xl bg-brown-gray/90 backdrop-blur-sm border border-purple-gray/50">
             <p className="text-lg text-gray-200 mb-2">
               Advanced climatology-based weather forecasting using NASA historical data
             </p>
@@ -285,8 +287,8 @@ function App() {
 
       <main className="max-w-6xl mx-auto space-y-8">
         {/* Map Section */}
-        <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
-          <h2 className="text-xl font-semibold mb-4 text-slate-100 flex items-center gap-2">
+        <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
+          <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
             🗺️ Select Location
           </h2>
           <LocationMap
@@ -301,8 +303,8 @@ function App() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
           <div className="space-y-6">
-            <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
-              <h2 className="text-xl font-semibold mb-4 text-slate-100 flex items-center gap-2">
+            <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
+              <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
                 📍 Location Details
               </h2>
               <LocationInput
@@ -315,8 +317,8 @@ function App() {
               />
             </section>
 
-            <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
-              <h2 className="text-xl font-semibold mb-4 text-slate-100 flex items-center gap-2">
+            <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
+              <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
                 📅 Forecast Period
               </h2>
               <DateRangeSelector
@@ -326,8 +328,8 @@ function App() {
               />
             </section>
 
-            <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
-              <h2 className="text-xl font-semibold mb-4 text-slate-100 flex items-center gap-2">
+            <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
+              <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
                 🎯 Forecast Type
               </h2>
               
@@ -335,7 +337,7 @@ function App() {
                 <button
                   onClick={handleExtendedForecast}
                   disabled={!isFormValid || loading}
-                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-geo-blue to-geo-cyan hover:from-geo-blue/80 hover:to-geo-cyan/80 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading && forecastType === 'extended' ? (
                     <>
@@ -352,7 +354,7 @@ function App() {
                 <button
                   onClick={handleMonthlyOutlook}
                   disabled={!isFormValid || loading}
-                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-purple-gray to-geo-blue hover:from-purple-gray/80 hover:to-geo-blue/80 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading && forecastType === 'monthly' ? (
                     <>
@@ -370,7 +372,7 @@ function App() {
               </div>
               
               {!isFormValid && (
-                <p className="text-sm text-yellow-400 text-center mt-4">
+                <p className="text-sm text-geo-cyan text-center mt-4">
                   Please select a location and date to generate forecasts
                 </p>
               )}
@@ -378,14 +380,14 @@ function App() {
 
             {/* Parameter Selection */}
             {(forecastType === 'extended' || forecastType === 'monthly') && (
-              <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
-                <h2 className="text-xl font-semibold mb-4 text-slate-100 flex items-center gap-2">
+              <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
+                <h2 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
                   ⚙️ Parameters
                 </h2>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  {['temperature', 'precipitation', 'humidity', 'wind'].map(param => (
-                    <label key={param} className="flex items-center space-x-2 text-sm text-gray-300">
+                  {['temperature', 'precipitation_chance', 'humidity', 'wind'].map(param => (
+                    <label key={param} className="flex items-center space-x-2 text-sm text-white">
                       <input
                         type="checkbox"
                         checked={selectedParameters.includes(param)}
@@ -398,7 +400,9 @@ function App() {
                         }}
                         className="rounded border-gray-600 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="capitalize">{param}</span>
+                      <span className="capitalize">
+                        {param === 'precipitation_chance' ? 'Precipitation Chance' : param}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -420,15 +424,15 @@ function App() {
 
           {/* Results Section */}
           <div>
-            <section className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700">
+            <section className="bg-brown-gray p-6 rounded-xl shadow-2xl border border-purple-gray">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-slate-100 flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
                   📊 Forecast Results
                 </h2>
                 {hasResults && (
                   <button
                     onClick={handleExport}
-                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
+                    className="px-4 py-2 bg-purple-gray hover:bg-geo-blue text-white rounded-lg text-sm font-medium transition flex items-center gap-2"
                   >
                     📁 Export Data
                   </button>
@@ -473,7 +477,7 @@ function App() {
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">�</div>
                   <p className="text-gray-400 mb-2">Ready to generate your climatology forecast</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-300">
                     Select a location and date above, then choose your forecast type
                   </p>
                 </div>
@@ -483,10 +487,10 @@ function App() {
         </div>
       </main>
 
-      <footer className="mt-16 text-center text-xs text-gray-500 border-t border-slate-700 pt-8">
+      <footer className="mt-16 text-center text-xs text-gray-300 border-t border-purple-gray pt-8">
         <div className="max-w-4xl mx-auto">
           <p className="mb-2">
-            <strong>Climatech</strong> - Climatology-based Weather Forecasting | Educational & Research Use Only
+            <strong>Geoclime</strong> - Climatology-based Weather Forecasting | Educational & Research Use Only
           </p>
           <p>
             Built with React + FastAPI | Data sources: NASA POWER, OpenStreetMap | Methods: Persistence, Analog, Climate Normals

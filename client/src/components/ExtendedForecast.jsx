@@ -198,9 +198,16 @@ const ExtendedForecast = ({ data, showClimateNormals, selectedParameters }) => {
                   </div>
                 )}
                 
+                {selectedParameters.includes('precipitation_chance') && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Precipitation Chance:</span>
+                    <span className="text-white font-medium">{Math.round(forecast.precipitation_probability || 0)}%</span>
+                  </div>
+                )}
+                
                 {selectedParameters.includes('precipitation') && (
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Precipitation:</span>
+                    <span className="text-gray-400">Precipitation Amount:</span>
                     <span className="text-white font-medium">{Math.round(forecast.precipitation_amount || 0)} mm</span>
                   </div>
                 )}
