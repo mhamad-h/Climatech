@@ -45,12 +45,26 @@ app = FastAPI(
 # Get settings
 settings = get_settings()
 
-# Configure CORS
+# Configure CORS with environment-specific settings
+if settings.cors_origins == "*":
+    cors_origins = ["*"]
+else:
+    # Split comma-separated origins
+    cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+
+if settings.environment == "production":
+    # In production, be more specific about allowed origins
+    cors_origins = [
+        settings.frontend_url,
+        "https://*.azurecontainerapps.io",
+        "https://*.azure.com"
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

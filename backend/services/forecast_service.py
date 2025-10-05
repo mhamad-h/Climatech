@@ -145,12 +145,26 @@ class ForecastService:
                        weight_analog * analog_result["temp_max"])
             temp_min = (weight_persistence * persistence_result["temp_min"] + 
                        weight_analog * analog_result["temp_min"])
-            precipitation = (weight_persistence * persistence_result["precipitation"] + 
-                           weight_analog * analog_result["precipitation"])
-            humidity = (weight_persistence * persistence_result["humidity"] + 
-                       weight_analog * analog_result["humidity"])
-            wind_speed = (weight_persistence * persistence_result["wind_speed"] + 
-                         weight_analog * analog_result["wind_speed"])
+            
+            # Better precipitation handling with seasonal context
+            precip_raw = (weight_persistence * persistence_result["precipitation"] + 
+                         weight_analog * analog_result["precipitation"])
+            
+            # Apply realistic constraints and seasonal adjustment
+            seasonal_precip = self._get_seasonal_precipitation_normal(historical_data, forecast_date)
+            precipitation = max(0.0, min(precip_raw * 0.6 + seasonal_precip * 0.4, 80.0))
+            
+            # Apply realistic constraints to other parameters
+            humidity = np.clip(
+                weight_persistence * persistence_result["humidity"] + 
+                weight_analog * analog_result["humidity"], 
+                15.0, 100.0
+            )
+            base_wind = (weight_persistence * persistence_result["wind_speed"] + 
+                        weight_analog * analog_result["wind_speed"])
+            wind_speed = self._calculate_realistic_wind_speed(
+                historical_data, forecast_date, base_wind
+            )
             
             method_confidence = (persistence_result["confidence"] + analog_result["confidence"]) / 2
             
@@ -173,9 +187,16 @@ class ForecastService:
                 
                 temp_max = climate_normal.temperature_max_normal + temp_trend_adjustment
                 temp_min = climate_normal.temperature_min_normal + temp_trend_adjustment
-                precipitation = climate_normal.precipitation_normal
-                humidity = climate_normal.humidity_normal
-                wind_speed = climate_normal.wind_speed_normal
+                
+                # Better precipitation handling for long-range forecasts
+                base_precipitation = climate_normal.precipitation_normal
+                seasonal_variance = self._calculate_seasonal_precipitation_variance(historical_data, forecast_date)
+                precipitation = max(0.0, base_precipitation * (0.8 + seasonal_variance * 0.4))
+                
+                humidity = np.clip(climate_normal.humidity_normal, 20.0, 100.0)
+                wind_speed = self._calculate_realistic_wind_speed(
+                    historical_data, forecast_date, climate_normal.wind_speed_normal
+                )
                 
                 # Reduced confidence for long-range forecasts
                 method_confidence = max(0.3, 0.8 - (days_ahead - 7) * 0.01)
@@ -189,14 +210,20 @@ class ForecastService:
                     temp_min = np.mean([d.temperature_min for d in month_data])
                     precipitation = np.mean([d.precipitation for d in month_data])
                     humidity = np.mean([d.humidity for d in month_data])
-                    wind_speed = np.mean([d.wind_speed for d in month_data])
+                    base_wind = np.mean([d.wind_speed for d in month_data])
+                    wind_speed = self._calculate_realistic_wind_speed(
+                        historical_data, forecast_date, base_wind
+                    )
                 else:
                     # Last resort: use overall averages
                     temp_max = np.mean([d.temperature_max for d in historical_data])
                     temp_min = np.mean([d.temperature_min for d in historical_data])
                     precipitation = np.mean([d.precipitation for d in historical_data])
                     humidity = np.mean([d.humidity for d in historical_data])
-                    wind_speed = np.mean([d.wind_speed for d in historical_data])
+                    base_wind = np.mean([d.wind_speed for d in historical_data])
+                    wind_speed = self._calculate_realistic_wind_speed(
+                        historical_data, forecast_date, base_wind
+                    )
                 
                 method_confidence = 0.3
         
@@ -221,19 +248,22 @@ class ForecastService:
         wind_direction = self.climatology_service.determine_wind_direction(
             historical_data, forecast_date
         )
+
         
         # Calculate confidence levels
-        data_quality_score = 85.0  # Assume good quality NASA data
+        data_quality_score = 90.0  # NASA POWER data is high quality
         
         temp_confidence = self.climatology_service.calculate_confidence_level(
             "climatology", days_ahead, data_quality_score, method_confidence
         )
         precip_confidence = self.climatology_service.calculate_confidence_level(
-            "climatology", days_ahead, data_quality_score, method_confidence * 0.8  # Lower for precipitation
+            "climatology", days_ahead, data_quality_score, method_confidence * 0.85  # Slightly lower for precipitation
         )
         
-        # Calculate precipitation probability
-        precip_probability = min(100.0, max(0.0, precipitation * 10))  # Simple heuristic
+        # Calculate precipitation probability using climatological approach
+        precip_probability = self._calculate_precipitation_probability(
+            historical_data, forecast_date, precipitation
+        )
         
         return WeatherForecast(
             date=forecast_date,
@@ -469,3 +499,342 @@ class ForecastService:
             patterns.append(f"Below normal precipitation expected ({avg_precip_anomaly:.0f}%)")
         
         return patterns
+    
+    def _get_seasonal_precipitation_normal(
+        self, 
+        historical_data: List[HistoricalWeatherData], 
+        forecast_date: date
+    ) -> float:
+        """Get seasonal precipitation normal for more accurate forecasting"""
+        
+        # Get data for the same month across all years
+        month_data = [d for d in historical_data if d.date.month == forecast_date.month]
+        
+        if not month_data:
+            return 0.0
+        
+        # Calculate median precipitation (more robust than mean for precipitation)
+        precipitations = [d.precipitation for d in month_data if d.precipitation >= 0]
+        
+        if not precipitations:
+            return 0.0
+        
+        # Use median to avoid outliers affecting the result
+        median_precip = np.median(precipitations)
+        
+        # Apply day-of-month adjustment (early/mid/late month patterns)
+        day_of_month = forecast_date.day
+        if day_of_month <= 10:  # Early month
+            adjustment = 0.9
+        elif day_of_month <= 20:  # Mid month
+            adjustment = 1.0
+        else:  # Late month
+            adjustment = 1.1
+        
+        return median_precip * adjustment
+    
+    def _calculate_seasonal_precipitation_variance(
+        self, 
+        historical_data: List[HistoricalWeatherData], 
+        forecast_date: date
+    ) -> float:
+        """Calculate seasonal precipitation variance for better uncertainty modeling"""
+        
+        month_data = [d for d in historical_data if d.date.month == forecast_date.month]
+        
+        if len(month_data) < 3:
+            return 0.2  # Default moderate variance
+        
+        precipitations = [d.precipitation for d in month_data if d.precipitation >= 0]
+        
+        if len(precipitations) < 3:
+            return 0.2
+        
+        # Calculate coefficient of variation (normalized variance)
+        mean_precip = np.mean(precipitations)
+        std_precip = np.std(precipitations)
+        
+        if mean_precip <= 0:
+            return 0.2
+        
+        cv = std_precip / mean_precip
+        
+        # Return normalized variance (0.0 to 1.0 range)
+        return min(1.0, cv / 2.0)
+
+    def _calculate_realistic_wind_speed(
+        self,
+        historical_data: List[HistoricalWeatherData],
+        forecast_date: date,
+        base_wind_speed: float
+    ) -> float:
+        """Calculate realistic wind speed using proper climatological methods."""
+        
+        month = forecast_date.month
+        day_of_year = forecast_date.timetuple().tm_yday
+        
+        # Get historical wind data for the month
+        month_data = [d for d in historical_data if d.date.month == month]
+        
+        if len(month_data) >= 10:
+            # Use historical climatology approach
+            return self._calculate_climatological_wind(month_data, forecast_date, base_wind_speed)
+        else:
+            # Use synthetic climatology based on location and season
+            return self._calculate_synthetic_wind(forecast_date, base_wind_speed)
+
+    def _calculate_climatological_wind(
+        self,
+        month_data: List[HistoricalWeatherData],
+        forecast_date: date,
+        base_wind_speed: float
+    ) -> float:
+        """Calculate wind using historical climatological patterns."""
+        
+        # Extract wind speeds and create climatology
+        wind_speeds = [d.wind_speed for d in month_data if d.wind_speed > 0]
+        
+        if not wind_speeds:
+            return self._calculate_synthetic_wind(forecast_date, base_wind_speed)
+        
+        # Calculate climatological statistics
+        wind_mean = np.mean(wind_speeds)
+        wind_median = np.median(wind_speeds)
+        wind_std = np.std(wind_speeds)
+        wind_p25 = np.percentile(wind_speeds, 25)
+        wind_p75 = np.percentile(wind_speeds, 75)
+        
+        # Day-of-month variation (some days are typically windier)
+        day_factor = 1.0 + 0.1 * np.sin(forecast_date.day * 2 * np.pi / 31)
+        
+        # Use persistence + climatology blend
+        if base_wind_speed > 0:
+            # Weight recent conditions with climatology (70% climo, 30% persistence)
+            persistence_weight = 0.3
+            climatology_weight = 0.7
+            
+            # Use median for stability, adjust with base wind trend
+            if base_wind_speed > wind_median:
+                # Recent winds higher than normal - trend toward upper quartile
+                target_wind = wind_p75
+            elif base_wind_speed < wind_median:
+                # Recent winds lower than normal - trend toward lower quartile  
+                target_wind = wind_p25
+            else:
+                # Recent winds normal - use median
+                target_wind = wind_median
+            
+            calculated_wind = (persistence_weight * base_wind_speed + 
+                             climatology_weight * target_wind) * day_factor
+        else:
+            # No persistence data - use pure climatology with seasonal adjustment
+            calculated_wind = wind_median * day_factor
+        
+        # Add realistic daily variability based on historical standard deviation
+        daily_var_factor = (forecast_date.day % 7) / 7.0  # 0 to 1
+        daily_variation = (daily_var_factor - 0.5) * wind_std * 0.4  # ±20% of std dev
+        
+        final_wind = calculated_wind + daily_variation
+        
+        # Constrain to reasonable bounds based on historical data
+        min_realistic = max(3.0, wind_p25 * 0.7)
+        max_realistic = min(50.0, wind_p75 * 1.4)
+        
+        return max(min_realistic, min(max_realistic, final_wind))
+
+    def _calculate_synthetic_wind(
+        self,
+        forecast_date: date,
+        base_wind_speed: float
+    ) -> float:
+        """Calculate synthetic wind using meteorological principles when no historical data."""
+        
+        month = forecast_date.month
+        day_of_year = forecast_date.timetuple().tm_yday
+        
+        # Seasonal cycle based on typical mid-latitude patterns
+        seasonal_amplitude = 6.0  # km/h amplitude
+        seasonal_mean = 15.0      # km/h annual mean
+        
+        # Peak windiness in late fall/winter (day ~330), minimum in summer (day ~200)
+        seasonal_phase = 330  # Day of year for peak winds
+        seasonal_wind = seasonal_mean + seasonal_amplitude * np.cos(
+            2 * np.pi * (day_of_year - seasonal_phase) / 365.25
+        )
+        
+        # Monthly fine-tuning based on typical patterns
+        monthly_factors = {
+            1: 1.2,   # January - Winter storm season
+            2: 1.15,  # February - Still stormy
+            3: 1.1,   # March - Transition, still windy
+            4: 1.0,   # April - Spring, moderate
+            5: 0.9,   # May - Spring, calming
+            6: 0.8,   # June - Early summer, calm
+            7: 0.75,  # July - Summer minimum
+            8: 0.8,   # August - Late summer
+            9: 0.9,   # September - Fall pickup
+            10: 1.0,  # October - Fall winds increasing
+            11: 1.1,  # November - Getting stormy
+            12: 1.15  # December - Winter storm approach
+        }
+        
+        monthly_factor = monthly_factors.get(month, 1.0)
+        
+        # Apply monthly adjustment
+        adjusted_seasonal = seasonal_wind * monthly_factor
+        
+        # Daily variability based on synoptic patterns (deterministic for consistency)
+        day_cycle = forecast_date.day % 10  # 10-day cycle
+        daily_factor = 0.9 + 0.2 * np.sin(day_cycle * 2 * np.pi / 10)  # 0.9 to 1.1
+        
+        # Persistence influence if we have base wind speed
+        if base_wind_speed > 0 and base_wind_speed < 50:
+            # Blend persistence with climatology (40% persistence, 60% climatology)
+            synthetic_wind = (0.4 * base_wind_speed + 0.6 * adjusted_seasonal) * daily_factor
+        else:
+            # Pure climatological estimate
+            synthetic_wind = adjusted_seasonal * daily_factor
+        
+        # Add some terrain/local effects (day-to-day variation)
+        terrain_effect = 2.0 * np.sin(forecast_date.toordinal() * 0.1)  # ±2 km/h
+        
+        final_wind = synthetic_wind + terrain_effect
+        
+        # Realistic bounds - typical range for most locations
+        return max(5.0, min(35.0, final_wind))
+
+    def _get_seasonal_wind_factor(self, month: int) -> float:
+        """Get seasonal wind factor based on typical patterns."""
+        
+        # More moderate seasonal wind patterns (Northern Hemisphere)
+        seasonal_factors = {
+            1: 1.15,  # January - Winter, stronger winds
+            2: 1.15,  # February - Winter, stronger winds  
+            3: 1.05,  # March - Transition, moderate winds
+            4: 1.0,   # April - Spring, moderate winds
+            5: 0.95,  # May - Spring, slightly calmer
+            6: 0.9,   # June - Early summer, calmer
+            7: 0.9,   # July - Summer, calmer
+            8: 0.9,   # August - Late summer, calmer
+            9: 0.95,  # September - Early fall, increasing
+            10: 1.0,  # October - Fall, moderate
+            11: 1.05, # November - Late fall, increasing
+            12: 1.15  # December - Early winter, stronger
+        }
+        
+        return seasonal_factors.get(month, 1.0)
+
+    def _get_seasonal_wind_base(self, month: int) -> float:
+        """Get realistic wind speed base values for each month when no historical data."""
+        
+        # More realistic monthly wind speeds (km/h) for temperate climate
+        seasonal_base = {
+            1: 18.0,  # January - Winter storms, stronger winds
+            2: 17.0,  # February - Still windy in winter
+            3: 16.0,  # March - Transition, still breezy
+            4: 14.0,  # April - Spring, moderate winds
+            5: 12.0,  # May - Spring, calmer but still breezy
+            6: 11.0,  # June - Early summer, lighter winds
+            7: 10.0,  # July - Summer, lightest winds
+            8: 11.0,  # August - Late summer, picking up
+            9: 13.0,  # September - Fall transition, windier
+            10: 15.0, # October - Fall, getting windier
+            11: 16.0, # November - Late fall, windy
+            12: 17.0  # December - Winter approaching, strong winds
+        }
+        
+        return seasonal_base.get(month, 14.0)
+
+    def _calculate_precipitation_probability(
+        self,
+        historical_data: List[HistoricalWeatherData],
+        forecast_date: date,
+        forecasted_precip: float
+    ) -> float:
+        """Calculate precipitation probability based on climatological patterns."""
+        month = forecast_date.month
+        
+        # Get same month data
+        same_month_data = [
+            record for record in historical_data
+            if record.date.month == month
+        ]
+        
+        if not same_month_data:
+            # Default probability based on forecasted amount
+            if forecasted_precip < 0.1:
+                return 10.0
+            elif forecasted_precip < 1.0:
+                return 30.0
+            elif forecasted_precip < 5.0:
+                return 60.0
+            else:
+                return 85.0
+        
+        # Count days with measurable precipitation (> 0.1mm)
+        wet_days = sum(1 for record in same_month_data 
+                      if record.precipitation > 0.1)
+        total_days = len(same_month_data)
+        
+        # Base probability from climatology
+        base_prob = (wet_days / total_days) * 100 if total_days > 0 else 20.0
+        
+        # Adjust based on forecasted amount
+        if forecasted_precip < 0.1:
+            # Very low precipitation
+            probability = base_prob * 0.2
+        elif forecasted_precip < 1.0:
+            # Light precipitation
+            probability = base_prob * 0.6
+        elif forecasted_precip < 5.0:
+            # Moderate precipitation
+            probability = base_prob * 1.0
+        elif forecasted_precip < 15.0:
+            # Heavy precipitation
+            probability = min(90.0, base_prob * 1.3)
+        else:
+            # Very heavy precipitation
+            probability = min(95.0, base_prob * 1.5)
+        
+        return min(100.0, max(5.0, probability))
+
+    def _calculate_precipitation_probability(
+        self, 
+        historical_data: List[HistoricalWeatherData], 
+        forecast_date: date, 
+        forecasted_precip: float
+    ) -> float:
+        """Calculate precipitation probability based on climatological patterns."""
+        month_data = [d for d in historical_data if d.date.month == forecast_date.month]
+        
+        if not month_data:
+            # Default probabilities based on forecasted amount
+            if forecasted_precip < 0.1:
+                return 10.0
+            elif forecasted_precip < 1.0:
+                return 30.0
+            elif forecasted_precip < 5.0:
+                return 60.0
+            else:
+                return 85.0
+        
+        # Count wet days (> 0.1mm precipitation)
+        wet_days = sum(1 for d in month_data if d.precipitation > 0.1)
+        total_days = len(month_data)
+        
+        # Base climatological probability
+        base_prob = (wet_days / total_days) * 100 if total_days > 0 else 20.0
+        
+        # Adjust based on forecasted amount
+        if forecasted_precip < 0.1:
+            probability = base_prob * 0.2
+        elif forecasted_precip < 1.0:
+            probability = base_prob * 0.6
+        elif forecasted_precip < 5.0:
+            probability = base_prob * 1.0
+        elif forecasted_precip < 15.0:
+            probability = min(90.0, base_prob * 1.3)
+        else:
+            probability = min(95.0, base_prob * 1.5)
+        
+        return min(100.0, max(5.0, probability))

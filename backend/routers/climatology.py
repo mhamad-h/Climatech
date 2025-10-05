@@ -229,71 +229,6 @@ async def get_monthly_outlook(
         raise HTTPException(status_code=500, detail="Failed to generate monthly outlook")
 
 
-@router.get("/location/climate-profile/{latitude}/{longitude}")
-async def get_location_climate_profile(latitude: float, longitude: float):
-    """Get comprehensive climate profile for a location"""
-    
-    try:
-        # Get comprehensive historical data
-        historical_data = await historical_service.get_last_n_years_data(
-            latitude, longitude, years=10
-        )
-        
-        if not historical_data:
-            raise ValueError("Insufficient data for climate profile")
-        
-        # Calculate comprehensive climate statistics
-        seasonal_trends = climatology_service.calculate_seasonal_trends(historical_data)
-        
-        # Calculate extremes
-        temps_max = [d.temperature_max for d in historical_data]
-        temps_min = [d.temperature_min for d in historical_data]
-        precip_values = [d.precipitation for d in historical_data]
-        
-        # Annual precipitation by year
-        annual_precip = {}
-        for record in historical_data:
-            year = record.date.year
-            if year not in annual_precip:
-                annual_precip[year] = 0
-            annual_precip[year] += record.precipitation
-        
-        # Determine wet and dry seasons
-        monthly_precip = seasonal_trends["monthly_climatology"]["precipitation"]
-        wet_months = [month for month, precip in monthly_precip.items() if precip > sum(monthly_precip.values())/12]
-        dry_months = [month for month, precip in monthly_precip.items() if precip < sum(monthly_precip.values())/12]
-        
-        return {
-            "location": {"latitude": latitude, "longitude": longitude},
-            "analysis_period": {
-                "start_year": min(d.date.year for d in historical_data),
-                "end_year": max(d.date.year for d in historical_data),
-                "data_years": len(set(d.date.year for d in historical_data))
-            },
-            "temperature_profile": {
-                "annual_mean_max": round(sum(temps_max) / len(temps_max), 1),
-                "annual_mean_min": round(sum(temps_min) / len(temps_min), 1),
-                "absolute_maximum": round(max(temps_max), 1),
-                "absolute_minimum": round(min(temps_min), 1),
-                "monthly_normals": seasonal_trends["monthly_climatology"]
-            },
-            "precipitation_profile": {
-                "annual_total_mean": round(sum(annual_precip.values()) / len(annual_precip), 1),
-                "wettest_year": max(annual_precip.values()),
-                "driest_year": min(annual_precip.values()),
-                "daily_maximum": round(max(precip_values), 1),
-                "wet_season_months": wet_months,
-                "dry_season_months": dry_months
-            },
-            "climate_trends": seasonal_trends["annual_trends"],
-            "data_quality": historical_service.validate_data_quality(historical_data)
-        }
-        
-    except Exception as e:
-        logger.error(f"Error generating climate profile: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate climate profile")
-
-
 @router.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -306,7 +241,6 @@ async def health_check():
             "6-month extended forecasting",
             "climatology-based predictions",
             "historical weather data",
-            "climate normal calculations",
-            "seasonal trend analysis"
+            "climate normal calculations"
         ]
     }

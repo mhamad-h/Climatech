@@ -1,0 +1,77 @@
+# Azure Container Apps deployment configuration
+location: "East US"
+environment: "climatech-env"
+
+resources:
+  # Container Registry
+  - type: "Microsoft.ContainerRegistry/registries"
+    name: "climatechregistry"
+    properties:
+      sku: "Basic"
+      adminUserEnabled: true
+
+  # Container Apps Environment
+  - type: "Microsoft.App/managedEnvironments"
+    name: "climatech-env"
+    properties:
+      location: "East US"
+
+  # Backend Container App
+  - type: "Microsoft.App/containerApps"
+    name: "climatech-backend"
+    properties:
+      environmentId: "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.App/managedEnvironments/climatech-env"
+      configuration:
+        ingress:
+          external: true
+          targetPort: 8000
+          allowInsecure: false
+        secrets:
+          - name: "registry-password"
+            value: "{registry-password}"
+      template:
+        containers:
+          - name: "climatech-backend"
+            image: "climatechregistry.azurecr.io/climatech-backend:latest"
+            resources:
+              cpu: 0.5
+              memory: "1Gi"
+            env:
+              - name: "BACKEND_HOST"
+                value: "0.0.0.0"
+              - name: "BACKEND_PORT"
+                value: "8000"
+              - name: "ENVIRONMENT"
+                value: "production"
+        scale:
+          minReplicas: 1
+          maxReplicas: 10
+
+  # Frontend Container App  
+  - type: "Microsoft.App/containerApps"
+    name: "climatech-frontend"
+    properties:
+      environmentId: "/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.App/managedEnvironments/climatech-env"
+      configuration:
+        ingress:
+          external: true
+          targetPort: 80
+          allowInsecure: false
+      template:
+        containers:
+          - name: "climatech-frontend"
+            image: "climatechregistry.azurecr.io/climatech-frontend:latest"
+            resources:
+              cpu: 0.25
+              memory: "0.5Gi"
+        scale:
+          minReplicas: 1
+          maxReplicas: 5
+
+  # Storage Account (for logs and data)
+  - type: "Microsoft.Storage/storageAccounts"
+    name: "climatechstorage"
+    properties:
+      sku:
+        name: "Standard_LRS"
+      kind: "StorageV2"

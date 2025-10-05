@@ -142,6 +142,18 @@ const ExtendedForecast = ({ data, showClimateNormals, selectedParameters }) => {
         >
           Weekly Summary
         </button>
+        {monthly_outlooks && monthly_outlooks.length > 0 && (
+          <button
+            onClick={() => setSelectedTimeframe('monthly')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              selectedTimeframe === 'monthly' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+            }`}
+          >
+            Monthly Outlook
+          </button>
+        )}
       </div>
 
       {/* Parameter selector */}
@@ -261,6 +273,95 @@ const ExtendedForecast = ({ data, showClimateNormals, selectedParameters }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Monthly outlook view */}
+      {selectedTimeframe === 'monthly' && monthly_outlooks && monthly_outlooks.length > 0 && (
+        <div className="space-y-4">
+          <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-800">
+            <h4 className="text-blue-300 font-medium mb-2">📅 6-Month Climate Outlook</h4>
+            <p className="text-gray-300 text-sm">
+              Long-term seasonal patterns based on climatological analysis. 
+              These outlooks show expected conditions compared to historical averages.
+            </p>
+          </div>
+          
+          {monthly_outlooks.map((outlook, index) => {
+            const monthNames = [
+              'January', 'February', 'March', 'April', 'May', 'June',
+              'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            const monthName = monthNames[outlook.month - 1];
+            
+            return (
+              <div key={index} className="bg-slate-700 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium text-white text-lg">
+                    {monthName} {outlook.year}
+                  </span>
+                  <span className={`text-sm px-2 py-1 rounded ${
+                    outlook.confidence === 'HIGH' 
+                      ? 'bg-green-900/50 text-green-300' 
+                      : outlook.confidence === 'MEDIUM'
+                      ? 'bg-yellow-900/50 text-yellow-300'
+                      : 'bg-red-900/50 text-red-300'
+                  }`}>
+                    {outlook.confidence} Confidence
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-slate-800 p-3 rounded">
+                    <span className="text-gray-400">Temperature Range:</span>
+                    <div className="text-white font-medium">
+                      {Math.round(outlook.avg_temperature_min)}° to {Math.round(outlook.avg_temperature_max)}°C
+                    </div>
+                    <div className="text-xs mt-1">
+                      <span className={`${outlook.temperature_vs_normal > 0 ? 'text-red-400' : outlook.temperature_vs_normal < 0 ? 'text-blue-400' : 'text-gray-400'}`}>
+                        {outlook.temperature_vs_normal > 0 ? '+' : ''}{outlook.temperature_vs_normal.toFixed(1)}°C vs normal
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-3 rounded">
+                    <span className="text-gray-400">Total Precipitation:</span>
+                    <div className="text-white font-medium">
+                      {Math.round(outlook.total_precipitation)} mm
+                    </div>
+                    <div className="text-xs mt-1">
+                      <span className={`${outlook.precipitation_vs_normal > 0 ? 'text-blue-400' : outlook.precipitation_vs_normal < 0 ? 'text-orange-400' : 'text-gray-400'}`}>
+                        {outlook.precipitation_vs_normal > 0 ? '+' : ''}{outlook.precipitation_vs_normal.toFixed(1)}% vs normal
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-800 p-3 rounded">
+                    <span className="text-gray-400">Conditions:</span>
+                    <div className="text-white font-medium">
+                      {outlook.avg_humidity}% humidity
+                    </div>
+                    <div className="text-xs mt-1 text-gray-400">
+                      {Math.round(outlook.avg_wind_speed)} km/h avg wind
+                    </div>
+                  </div>
+                </div>
+                
+                {outlook.dominant_conditions && outlook.dominant_conditions.length > 0 && (
+                  <div className="mt-3 pt-2 border-t border-slate-600">
+                    <span className="text-gray-400 text-xs">Expected Conditions:</span>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {outlook.dominant_conditions.slice(0, 3).map((condition, i) => (
+                        <span key={i} className="text-xs bg-slate-600 px-2 py-1 rounded text-gray-300">
+                          {condition}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -12,6 +12,18 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     frontend_url: str = "http://localhost:5173"
     
+    # Azure Configuration
+    azure_storage_connection_string: str = ""
+    azure_key_vault_url: str = ""
+    azure_app_insights_key: str = ""
+    
+    # Environment
+    environment: str = "development"  # development, staging, production
+    
+    # Security
+    secret_key: str = "climatech-secret-key-change-in-production"
+    cors_allow_credentials: bool = True
+    
     # NASA APIs
     nasa_power_base_url: str = "https://power.larc.nasa.gov/api/temporal/hourly/point"
     gpm_data_url: str = "https://gpm1.gesdisc.eosdis.nasa.gov/data/GPM_L3"
@@ -33,7 +45,7 @@ class Settings(BaseSettings):
     log_file: str = "./logs/app.log"
     
     # CORS
-    cors_origins: List[str] = ["*"]
+    cors_origins: str = "*"  # Will be split on commas
     
     class Config:
         env_file = ".env"

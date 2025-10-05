@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Get API base URL from environment or default  
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.164.97:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? '/api' : 'http://192.168.164.97:8000/api');
 
 // Axios instance configured for backend API
 export const api = axios.create({
@@ -143,19 +144,6 @@ export async function getMonthlyOutlook(params) {
   
   const response = await api.get(`/forecast/monthly-outlook/${params.lat}/${params.lng}?${queryParams}`);
   console.log('Monthly outlook response:', response.data);
-  return response.data;
-}
-
-/**
- * Get comprehensive climate profile for a location
- * @param {Object} params - Parameters object
- * @param {number} params.lat - Latitude in decimal degrees
- * @param {number} params.lng - Longitude in decimal degrees
- * @returns {Promise<Object>} Climate profile response
- */
-export async function getClimateProfile(params) {
-  const response = await api.get(`/location/climate-profile/${params.lat}/${params.lng}`);
-  console.log('Climate profile response:', response.data);
   return response.data;
 }
 

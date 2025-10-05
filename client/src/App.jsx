@@ -4,9 +4,8 @@ import LocationInput from './components/LocationInput.jsx';
 import DateRangeSelector from './components/DateRangeSelector.jsx';
 import ExtendedForecast from './components/ExtendedForecast.jsx';
 import MonthlyOutlook from './components/MonthlyOutlook.jsx';
-import ClimateProfile from './components/ClimateProfile.jsx';
 import Loader from './components/Loader.jsx';
-import { getExtendedForecast, getMonthlyOutlook, getClimateProfile } from './services/api.js';
+import { getExtendedForecast, getMonthlyOutlook, getClimateNormal, getHistoricalData } from './services/api.js';
 
 function App() {
   // Location state
@@ -19,14 +18,13 @@ function App() {
   // Date and forecast state
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [forecastDays, setForecastDays] = useState(30);
-  const [forecastType, setForecastType] = useState('extended'); // 'extended', 'monthly', 'climate'
+  const [forecastType, setForecastType] = useState('extended'); // 'extended', 'monthly'
 
   // API interaction state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [extendedForecast, setExtendedForecast] = useState(null);
   const [monthlyOutlook, setMonthlyOutlook] = useState(null);
-  const [climateProfile, setClimateProfile] = useState(null);
   
   // Display preferences
   const [showClimateNormals, setShowClimateNormals] = useState(true);
@@ -41,7 +39,6 @@ function App() {
     // Clear previous forecasts when location changes
     setExtendedForecast(null);
     setMonthlyOutlook(null);
-    setClimateProfile(null);
   };
 
   const handleMapLocationSelect = (lat, lng) => {
@@ -132,7 +129,6 @@ function App() {
       const forecastData = await getExtendedForecast(requestParams);
       setExtendedForecast(forecastData);
       setMonthlyOutlook(null);
-      setClimateProfile(null);
     } catch (err) {
       setError(err.message || 'Failed to generate extended forecast');
     } finally {
@@ -164,45 +160,8 @@ function App() {
       const outlookData = await getMonthlyOutlook(requestParams);
       setMonthlyOutlook(outlookData);
       setExtendedForecast(null);
-      setClimateProfile(null);
     } catch (err) {
       setError(err.message || 'Failed to generate monthly outlook');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Climate profile handler
-  const handleClimateProfile = async () => {
-    if (!latitude || !longitude) {
-      setError('Please select a location');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setForecastType('climate');
-    
-    try {
-      console.log('Fetching climate profile for:', { latitude, longitude });
-      
-      // Fetch both climate normals and historical data
-      const [climateNormals, historicalData] = await Promise.all([
-        getClimateNormal({ lat: latitude, lng: longitude }),
-        getHistoricalData({ lat: latitude, lng: longitude, years: 10 })
-      ]);
-      
-      const profileData = {
-        climate_normals: climateNormals,
-        historical_data: historicalData,
-        location: { latitude, longitude }
-      };
-      
-      setClimateProfile(profileData);
-      setExtendedForecast(null);
-      setMonthlyOutlook(null);
-    } catch (err) {
-      setError(err.message || 'Failed to generate climate profile');
     } finally {
       setLoading(false);
     }
@@ -221,10 +180,6 @@ function App() {
       case 'monthly':
         data = monthlyOutlook;
         filename = `monthly_outlook_${latitude}_${longitude}_${startDate}.json`;
-        break;
-      case 'climate':
-        data = climateProfile;
-        filename = `climate_profile_${latitude}_${longitude}.json`;
         break;
       default:
         return;
@@ -245,21 +200,88 @@ function App() {
   };
 
   const isFormValid = latitude && longitude && startDate;
-  const hasResults = extendedForecast || monthlyOutlook || climateProfile;
+  const hasResults = extendedForecast || monthlyOutlook;
 
   return (
     <div className="min-h-screen px-4 py-6 md:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <header className="max-w-6xl mx-auto mb-8 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-          Climatech �
-        </h1>
-        <p className="text-lg text-gray-400 mb-2">
-          Advanced climatology-based weather forecasting using NASA historical data
-        </p>
-        <p className="text-sm text-gray-500">
-          Get extended forecasts up to 6 months ahead with climate analysis
-        </p>
-      </header>
+      {/* Rain Effect Styles */}
+      <style>{`
+        .rain-container {
+          position: relative;
+          overflow: hidden;
+        }
+        .rain-effect {
+          pointer-events: none;
+          position: absolute;
+          top: 0; 
+          left: 0; 
+          width: 100%; 
+          height: 200px;
+          z-index: 1;
+          overflow: hidden;
+        }
+        .rain-drop {
+          position: absolute;
+          width: 2px;
+          height: 20px;
+          background: linear-gradient(to bottom, rgba(165, 180, 252, 0.8) 0%, rgba(165, 180, 252, 0.3) 70%, transparent 100%);
+          border-radius: 1px;
+          animation: rain-fall linear infinite;
+        }
+        @keyframes rain-fall {
+          0% { 
+            transform: translateY(-30px); 
+            opacity: 0.8; 
+          }
+          100% { 
+            transform: translateY(220px); 
+            opacity: 0; 
+          }
+        }
+      `}</style>
+      
+      <div className="rain-container">
+        <div className="rain-effect">
+          {Array.from({ length: 80 }).map((_, i) => (
+            <div
+              key={i}
+              className="rain-drop"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDuration: `${0.8 + Math.random() * 0.8}s`,
+                animationDelay: `${Math.random() * 2}s`,
+                height: `${15 + Math.random() * 10}px`,
+                opacity: 0.4 + Math.random() * 0.4,
+              }}
+            />
+          ))}
+        </div>
+        
+        <header className="max-w-6xl mx-auto mb-8 text-center relative z-10">
+          <h1
+            className="text-4xl md:text-6xl font-bold tracking-tight mb-4"
+            style={{
+              background: 'linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              position: 'relative',
+              zIndex: 2,
+              padding: '0.5rem 0',
+              textShadow: '0 2px 8px rgba(30,64,175,0.3)',
+            }}
+          >
+            GeoClime
+          </h1>
+          <div className="inline-block px-6 py-3 rounded-xl bg-slate-900/80 backdrop-blur-sm border border-slate-700/50">
+            <p className="text-lg text-gray-200 mb-2">
+              Advanced climatology-based weather forecasting using NASA historical data
+            </p>
+            <p className="text-sm text-gray-400">
+              Get extended forecasts up to 6 months ahead with climate analysis
+            </p>
+          </div>
+        </header>
+      </div>
 
       <main className="max-w-6xl mx-auto space-y-8">
         {/* Map Section */}
@@ -344,22 +366,7 @@ function App() {
                   )}
                 </button>
 
-                <button
-                  onClick={handleClimateProfile}
-                  disabled={!isFormValid || loading}
-                  className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading && forecastType === 'climate' ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      🔬 Climate Profile & Analysis
-                    </>
-                  )}
-                </button>
+
               </div>
               
               {!isFormValid && (
@@ -433,7 +440,6 @@ function App() {
                   message={
                     forecastType === 'extended' ? 'Generating extended forecast using climatology methods...' :
                     forecastType === 'monthly' ? 'Creating monthly outlook with seasonal analysis...' :
-                    forecastType === 'climate' ? 'Analyzing climate patterns and historical data...' :
                     'Processing your request...'
                   } 
                 />
@@ -460,13 +466,6 @@ function App() {
                 <MonthlyOutlook 
                   data={monthlyOutlook}
                   showClimateNormals={showClimateNormals}
-                />
-              )}
-              
-              {/* Climate Profile Display */}
-              {climateProfile && !loading && (
-                <ClimateProfile 
-                  data={climateProfile}
                 />
               )}
               
