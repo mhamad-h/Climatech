@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-// Get API base URL from environment or default  
+// Get API base URL from environment or use fixed backend URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' ? 'http://climatech-backend-4460.eastus.azurecontainer.io:8000/api' : 'http://192.168.164.97:8000/api');
+  (import.meta.env.MODE === 'production' ? 'http://climatech-backend-2467.eastus.azurecontainer.io:8000/api' : 'http://192.168.164.97:8000/api');
+
+// Debug: Log the detected API URL
+console.log('🔍 Auto-detected API URL:', API_BASE_URL);
+console.log('🌐 Current hostname:', window.location.hostname);
 
 // Axios instance configured for backend API
 export const api = axios.create({

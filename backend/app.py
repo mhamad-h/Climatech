@@ -45,31 +45,13 @@ app = FastAPI(
 # Get settings
 settings = get_settings()
 
-# Configure CORS with environment-specific settings
-if settings.cors_origins == "*":
-    cors_origins = ["*"]
-else:
-    # Split comma-separated origins
-    cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
-
-if settings.environment == "production":
-    # In production, be more specific about allowed origins
-    cors_origins = [
-        settings.frontend_url,
-        settings.production_frontend_url if hasattr(settings, 'production_frontend_url') else None,
-        "http://climatech-frontend-7057.eastus.azurecontainer.io",
-        "https://*.azurecontainerapps.io",
-        "https://*.azure.com"
-    ]
-    # Remove None values
-    cors_origins = [origin for origin in cors_origins if origin is not None]
-
+# Configure CORS - Allow ALL origins and methods
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=settings.cors_allow_credentials,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_origins=["*"],           # Allow all origins
+    allow_credentials=False,       # Must be False when using "*"
+    allow_methods=["*"],          # Allow all HTTP methods
+    allow_headers=["*"],          # Allow all headers
 )
 
 # Include routers

@@ -29,6 +29,12 @@ function App() {
   // Display preferences
   const [showClimateNormals, setShowClimateNormals] = useState(true);
   const [selectedParameters, setSelectedParameters] = useState(['temperature', 'precipitation_chance', 'humidity', 'wind']);
+  
+  // Show detected API URL info
+  const showApiInfo = () => {
+    const detectedUrl = window.API_BASE_URL || 'Auto-detecting...';
+    alert(`🔍 Auto-detected API URL:\n${detectedUrl}\n\nFrontend: ${window.location.href}\nHostname: ${window.location.hostname}`);
+  };
 
   // Location handlers
   const handleLocationChange = (lat, lng) => {
@@ -260,6 +266,15 @@ function App() {
         </div>
         
         <header className="max-w-6xl mx-auto mb-8 text-center relative z-10">
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={showApiInfo}
+              className="px-3 py-1 text-xs bg-purple-gray hover:bg-geo-blue text-white rounded-lg transition"
+              title="Show Auto-detected API URL"
+            >
+              🔍 API Info
+            </button>
+          </div>
           <h1
             className="text-4xl md:text-6xl font-bold tracking-tight mb-4"
             style={{
